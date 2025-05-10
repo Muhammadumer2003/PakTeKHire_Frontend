@@ -22,7 +22,7 @@ const ProposalPage = () => {
   const freelancerId = auth?.user?._id;
   const freelancerName = auth?.user?.fullname;
 
-  const GROQ_API_KEY="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"
+  // const GROQ_API_KEY="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"
   
   useEffect(() => {
     const fetchJobDetails = async () => {
