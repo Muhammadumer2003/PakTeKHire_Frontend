@@ -20,15 +20,19 @@ const ProposalPage = () => {
 
   const auth = useSelector((store) => store.auth);
   const freelancerId = auth?.user?._id;
+  const freelancerName = auth?.user?.fullname;
+
+  const GROQ_API_KEY="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"
   
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8008/api/jobs/${jobId}`,
+          `http://localhost:8008/jobs/${jobId}`,
           { withCredentials: true }
         );
-        setJobDetails(response.data);
+        setJobDetails(response.data.job); // Adjust to match the response structure if needed
+        await generateCoverLetter(response.data.job);
       } catch (err) {
         setError('Failed to load job details');
         console.error('Error fetching job details:', err);
@@ -39,6 +43,47 @@ const ProposalPage = () => {
 
     fetchJobDetails();
   }, [jobId]);
+
+  const generateCoverLetter = async (job) => {
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a professional cover letter writer. Generate a concise cover letter (within 3000 characters) tailored to the job description provided, introducing the freelancer as an experienced professional seeking to contribute to the project.'
+            },
+            {
+              role: 'user',
+              content: `Job Title: ${job.jobTitle}\nDescription: ${job.jobDescription}\nSkills Required: ${job.skills?.join(', ') || 'Not specified'}\nFreelancer ID: ${freelancerName}`
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
+        }),
+      });
+
+      const data = await response.json();
+      const generatedText = data.choices[0].message.content.trim();
+      if (generatedText.length <= 3000) {
+        setCoverLetter(generatedText);
+        setCharactersLeft(3000 - generatedText.length);
+      } else {
+        setCoverLetter(generatedText.slice(0, 3000));
+        setCharactersLeft(0);
+      }
+    } catch (err) {
+      console.error('Error generating cover letter:', err);
+      setCoverLetter('Unable to generate cover letter. Please write your own.');
+      setCharactersLeft(3000);
+    }
+  };
 
   const handleCoverLetterChange = (e) => {
     const text = e.target.value;
@@ -114,7 +159,7 @@ const ProposalPage = () => {
         <div className="bg-white rounded-lg shadow-sm mb-6 p-6">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-xl font-bold text-gray-800">{jobDetails?.title || 'Job Title'}</h1>
+              <h1 className="text-xl font-bold text-gray-800">{jobDetails?.jobTitle || 'Job Title'}</h1>
               <p className="text-green-600 font-medium mt-1">
                 {jobDetails?.category || 'Category'} - {jobDetails?.expertise || 'Expertise Level'}
               </p>
@@ -127,7 +172,7 @@ const ProposalPage = () => {
           </div>
           
           <div className="border-t border-gray-200 mt-4 pt-4">
-            <p className="text-gray-700 whitespace-pre-line">{jobDetails?.description || 'No description provided'}</p>
+            <p className="text-gray-700 whitespace-pre-line">{jobDetails?.jobDescription || 'No description provided'}</p>
           </div>
           
           <div className="border-t border-gray-200 mt-4 pt-4">
