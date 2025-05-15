@@ -65,7 +65,7 @@ const Register = () => {
     formDataToSend.append("skills", skills); // Assuming skills as a comma-separated string
 
     try {
-      const response = await fetch("http://localhost:8008/user/signup", {
+      const response = await fetch("http://51.21.200.232:8008/user/signup", {
         method: "POST",
         body: formDataToSend, // Use FormData for file upload
       });

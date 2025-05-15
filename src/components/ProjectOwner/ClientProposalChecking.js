@@ -1,10 +1,8 @@
 /* eslint-disable react/jsx-no-undef */
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, ChevronUp, Calendar, Clock, ThumbsUp, ThumbsDown, FileText, MessageSquare, User, DollarSign, Award, Briefcase } from 'lucide-react';
-
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-
 
 const ClientProposalChecking = () => {
   const [jobs, setJobs] = useState([]);
@@ -21,19 +19,17 @@ const ClientProposalChecking = () => {
     navigate(`/client/chat/${freelancerId}`);
   };
 
-  
-
   useEffect(() => {
     const fetchJobsAndProposals = async () => {
       try {
         const response = await fetch('http://localhost:8008/api/client/jobs/proposals', {
           credentials: 'include'
         });
-        
+        console.log('Fetch response status:', response.status);
         if (response.ok) {
           const data = await response.json();
+          console.log('Fetched data:', data);
           setJobs(data.jobs);
-          
           const proposalsByJob = {};
           data.proposals.forEach(proposal => {
             if (!proposalsByJob[proposal.jobId]) {
@@ -42,6 +38,10 @@ const ClientProposalChecking = () => {
             proposalsByJob[proposal.jobId].push(proposal);
           });
           setProposals(proposalsByJob);
+          console.log('Processed jobs:', data.jobs);
+          console.log('Processed proposals by job:', proposalsByJob);
+        } else {
+          console.error('Response not OK:', await response.text());
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -59,7 +59,6 @@ const ClientProposalChecking = () => {
       [jobId]: !prevExpandedJobs[jobId],
     }));
     
-    // Reset selected proposal when collapsing job
     if (expandedJobs[jobId]) {
       setSelectedProposal(null);
     }
@@ -77,7 +76,6 @@ const ClientProposalChecking = () => {
       });
       
       if (response.ok) {
-        // Update local state to reflect the hire
         const updatedProposals = { ...proposals };
         updatedProposals[jobId] = updatedProposals[jobId].map(p => 
           p._id === proposalId ? { ...p, status: 'Accepted' } : p
@@ -165,7 +163,8 @@ const ClientProposalChecking = () => {
   };
 
   const filteredJobs = jobs.filter(job => {
-    return job.jobTitle.toLowerCase().includes(searchTerm.toLowerCase());
+    const title = job.jobTitle || job.title || '';
+    return title.toLowerCase().includes(searchTerm?.toLowerCase());
   });
 
   if (isLoading) {
@@ -210,7 +209,9 @@ const ClientProposalChecking = () => {
         <div className="p-6">
           {filteredJobs.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">No jobs found matching your search.</p>
+              <p className="text-gray-500">
+                {searchTerm ? 'No jobs found matching your search.' : 'No jobs available for this client.'}
+              </p>
             </div>
           ) : (
             filteredJobs.map((job) => (
@@ -219,7 +220,7 @@ const ClientProposalChecking = () => {
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h2 className="text-xl font-semibold text-gray-900 mb-2">{job.jobTitle}</h2>
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">{job.jobTitle || job.title || 'Untitled Job'}</h2>
                         <div className="flex gap-4 text-sm text-gray-600">
                           <span className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
@@ -227,11 +228,11 @@ const ClientProposalChecking = () => {
                           </span>
                           <span className="flex items-center gap-1">
                             <DollarSign className="h-4 w-4" />
-                            Budget: PKR {job.budget}
+                            Budget: PKR {job.budget && typeof job.budget === 'object' ? `${job.budget.min} - ${job.budget.max}` : job.budget || 'TBD'}
                           </span>
                           <span className="flex items-center gap-1">
                             <Briefcase className="h-4 w-4" />
-                            {job.jobType}
+                            {job.jobType || 'Type not specified'}
                           </span>
                         </div>
                       </div>
@@ -251,9 +252,7 @@ const ClientProposalChecking = () => {
                       <div className="mt-6">
                         {renderProposalMetrics(job._id)}
 
-                        {/* Upwork-like two-panel layout */}
                         <div className="flex gap-6">
-                          {/* Left panel: Proposal list */}
                           <div className="w-1/3 border border-gray-200 rounded-lg overflow-hidden">
                             <div className="bg-gray-50 p-4 border-b border-gray-200">
                               <h3 className="font-medium text-gray-700">Freelancers ({(proposals[job._id] || []).length})</h3>
@@ -293,7 +292,6 @@ const ClientProposalChecking = () => {
                             </div>
                           </div>
                           
-                          {/* Right panel: Selected proposal details */}
                           <div className="w-2/3 border border-gray-200 rounded-lg overflow-hidden">
                             {selectedProposal ? (
                               <div>
@@ -334,56 +332,40 @@ const ClientProposalChecking = () => {
                                     </div>
                                   </div>
 
-                                  {/* {selectedProposal.attachments && selectedProposal.attachments.length > 0 && (
+                                  {selectedProposal.attachments && selectedProposal.attachments.length > 0 && (
                                     <div className="mb-8">
                                       <h4 className="font-medium text-gray-700 mb-3">Attachments</h4>
                                       <div className="flex flex-wrap gap-3">
                                         {selectedProposal.attachments.map((attachment, index) => (
-                                          <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-                                            <FileText className="h-4 w-4 text-blue-500" />
-                                            <span className="text-sm text-gray-700">{attachment.split('/').pop()}</span>
+                                          <div key={index} className="flex items-center gap-4 bg-gray-50 px-4 py-3 rounded-lg shadow-sm">
+                                            <FileText className="h-5 w-5 text-blue-500" />
+                                            <div className="flex flex-col">
+                                              <span className="text-sm text-gray-700 mb-1">
+                                                {attachment.split('/').pop()}
+                                              </span>
+                                              <div className="flex gap-2">
+                                                <a
+                                                  href={attachment}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-xs text-white bg-blue-500 px-2 py-1 rounded hover:bg-blue-600"
+                                                >
+                                                  View
+                                                </a>
+                                                <a
+                                                  href={attachment}
+                                                  download
+                                                  className="text-xs text-white bg-green-500 px-2 py-1 rounded hover:bg-green-600"
+                                                >
+                                                  Download
+                                                </a>
+                                              </div>
+                                            </div>
                                           </div>
                                         ))}
                                       </div>
                                     </div>
-                                  )} */}
-                                {selectedProposal.attachments && selectedProposal.attachments.length > 0 && (
-  <div className="mb-8">
-    <h4 className="font-medium text-gray-700 mb-3">Attachments</h4>
-    <div className="flex flex-wrap gap-3">
-      {selectedProposal.attachments.map((attachment, index) => (
-        <div key={index} className="flex items-center gap-4 bg-gray-50 px-4 py-3 rounded-lg shadow-sm">
-          <FileText className="h-5 w-5 text-blue-500" />
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-700 mb-1">
-              {attachment.split('/').pop()}
-            </span>
-            <div className="flex gap-2">
-              {/* Viewing the PDF using iframe or embed */}
-              <a
-                href={attachment}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-white bg-blue-500 px-2 py-1 rounded hover:bg-blue-600"
-              >
-                View
-              </a>
-              {/* Downloading the PDF */}
-              <a
-                href={attachment}
-                download
-                className="text-xs text-white bg-green-500 px-2 py-1 rounded hover:bg-green-600"
-              >
-                Download
-              </a>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
+                                  )}
                                   
                                   <div className="flex gap-3">
                                     {selectedProposal.status === 'Pending' && (
@@ -403,18 +385,16 @@ const ClientProposalChecking = () => {
                                       </>
                                     )}
 
-                                  <Link to={`/client/chat/${selectedProposal?.freelancerId?._id}`}>
-                                  <button
-                                 
-                               
-                                className="px-4 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition flex items-center gap-2">
-                                  <MessageSquare className="h-4 w-4" /> Message
-                                </button>
-                                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition flex items-center gap-2">
-                                  <Calendar className="h-4 w-4" /> Schedule Interview
-                                </button>
-                                  </Link>
-                                    
+                                    <Link to={`/client/chat/${selectedProposal?.freelancerId?._id}`}>
+                                      <button
+                                        className="px-4 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition flex items-center gap-2"
+                                      >
+                                        <MessageSquare className="h-4 w-4" /> Message
+                                      </button>
+                                    </Link>
+                                    <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition flex items-center gap-2">
+                                      <Calendar className="h-4 w-4" /> Schedule Interview
+                                    </button>
                                   </div>
                                 </div>
                               </div>

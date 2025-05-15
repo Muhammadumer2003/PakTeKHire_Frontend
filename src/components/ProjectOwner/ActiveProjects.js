@@ -1,37 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const ActiveProjects = () => {
+  const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const projects = [
-    {
-      title: 'Project 1',
-      status: 'In Progress',
-      deadline: 'Dec 20, 2024',
-      client: 'John Doe',
-      budget: 'Rs 2000 - Rs 4000',
-      description: 'This project involves developing a full-stack web application with user authentication and payment integration.',
-      milestones: ['Milestone 1: UI Design', 'Milestone 2: Backend Setup', 'Milestone 3: Testing & Deployment'],
-    },
-    {
-      title: 'Project 2',
-      status: 'In Progress',
-      deadline: 'Jan 10, 2025',
-      client: 'Jane Smith',
-      budget: 'Rs 5000 - Rs 8000',
-      description: 'A mobile app project focused on fitness tracking and AI-based recommendations.',
-      milestones: ['Milestone 1: Prototype', 'Milestone 2: API Integration', 'Milestone 3: Final Testing'],
-    },
-    {
-      title: 'Project 3',
-      status: 'In Progress',
-      deadline: 'Feb 1, 2025',
-      client: 'Mike Johnson',
-      budget: 'Rs 3000 - Rs 6000',
-      description: 'E-commerce platform with real-time order tracking and dynamic pricing features.',
-      milestones: ['Milestone 1: Database Setup', 'Milestone 2: Payment Gateway Integration', 'Milestone 3: Security Testing'],
-    },
-  ];
+  // Base API URL (replace with your backend URL)
+  const API_URL = 'http://51.21.200.232:8008'; // Update with your actual backend URL
+
+  // Fetch jobs on component mount
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_URL}/client/getjobs`);
+        if (response.data.success) {
+          // Filter jobs with status 'Ongoing' and map to frontend-compatible format
+          const ongoingJobs = response.data.jobs
+            .filter((job) => job.status === 'Ongoing')
+            .map((job) => ({
+              title: job.title,
+              status: job.status,
+              deadline: job.deadline
+                ? new Date(job.deadline).toLocaleDateString()
+                : 'Not specified', // Format date or handle missing
+              client: job.createdBy?.fullname || 'Unknown Client',
+              budget:
+                job.jobType === 'hourly'
+                  ? `Rs ${job.budget.min} - Rs ${job.budget.max}`
+                  : `Rs ${job.budget}`,
+              description: job.description,
+              milestones: job.screeningQuestions?.length
+                ? job.screeningQuestions.map((q, i) => `Milestone ${i + 1}: ${q}`)
+                : ['No milestones defined'], // Adapt as needed
+            }));
+          setProjects(ongoingJobs);
+        } else {
+          setError('Failed to fetch jobs');
+        }
+      } catch (err) {
+        setError('Error fetching jobs: ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   const handleViewDetails = (project) => {
     setSelectedProject(project);
@@ -44,32 +61,47 @@ const ActiveProjects = () => {
   return (
     <div className="px-6 py-12 bg-gray-50">
       <h2 className="text-4xl font-bold text-gray-800 text-center mb-10">Active Projects</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {projects.map((project, index) => (
-          <div
-            key={index}
-            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-105"
-          >
-            <div className="flex flex-col h-full items-center">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-3">{project.title}</h3>
-              <p className="text-gray-600 mb-4">{project.status}</p>
-              <div className="text-sm text-gray-500 mb-4">
-                <p className="mb-1"><strong>Deadline:</strong> {project.deadline}</p>
-                <p className="mb-1"><strong>Client:</strong> {project.client}</p>
-                <p><strong>Budget:</strong> {project.budget}</p>
-              </div>
-              <div className="flex justify-between items-center mt-auto">
-                <button
-                  onClick={() => handleViewDetails(project)}
-                  className="bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-6 rounded-lg text-lg font-semibold shadow-md hover:bg-gradient-to-r hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 ease-in-out"
-                >
-                  View Details
-                </button>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center text-gray-600">Loading projects...</div>
+      )}
+
+      {/* Error State */}
+      {error && <div className="text-center text-red-500">{error}</div>}
+
+      {/* Projects Grid */}
+      {!loading && !error && projects.length === 0 && (
+        <div className="text-center text-gray-600">No ongoing projects found.</div>
+      )}
+      {!loading && !error && projects.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {projects.map((project, index) => (
+            <div
+              key={index}
+              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-105"
+            >
+              <div className="flex flex-col h-full items-center">
+                <h3 className="text-2xl font-semibold text-gray-900 mb-3">{project.title}</h3>
+                <p className="text-gray-600 mb-4">{project.status}</p>
+                <div className="text-sm text-gray-500 mb-4">
+                  <p className="mb-1"><strong>Deadline:</strong> {project.deadline}</p>
+                  <p className="mb-1"><strong>Client:</strong> {project.client}</p>
+                  <p><strong>Budget:</strong> {project.budget}</p>
+                </div>
+                <div className="flex justify-between items-center mt-auto">
+                  <button
+                    onClick={() => handleViewDetails(project)}
+                    className="bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-6 rounded-lg text-lg font-semibold shadow-md hover:bg-gradient-to-r hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 ease-in-out"
+                  >
+                    View Details
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Modal for Project Details */}
       {selectedProject && (

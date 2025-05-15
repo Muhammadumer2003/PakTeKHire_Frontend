@@ -22,13 +22,13 @@ const ProposalPage = () => {
   const freelancerId = auth?.user?._id;
   const freelancerName = auth?.user?.fullname;
 
-  // const GROQ_API_KEY="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"
+  const GROQ_API_KEY="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"
   
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8008/jobs/${jobId}`,
+          `http://51.21.200.232:8008/jobs/${jobId}`,
           { withCredentials: true }
         );
         setJobDetails(response.data.job); // Adjust to match the response structure if needed
@@ -112,9 +112,9 @@ const ProposalPage = () => {
       }
 
       const formData = new FormData();
-      formData.append('proposalText', proposalText);
+      formData.append('coverLetter', proposalText);
       formData.append('bidAmount', bidAmount);
-      formData.append('coverLetter', coverLetter);
+      formData.append('proposalText', coverLetter);
       formData.append('estimatedDuration', estimatedDuration);
 
       for (let i = 0; i < attachments.length; i++) {
@@ -122,7 +122,7 @@ const ProposalPage = () => {
       }
 
       const response = await axios.post(
-        `http://localhost:8008/api/proposals/${jobId}`,
+        `http://51.21.200.232:8008/api/proposals/${jobId}`,
         formData,
         {
           headers: {
@@ -159,20 +159,28 @@ const ProposalPage = () => {
         <div className="bg-white rounded-lg shadow-sm mb-6 p-6">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-xl font-bold text-gray-800">{jobDetails?.jobTitle || 'Job Title'}</h1>
+              <h1 className="text-xl font-bold text-gray-800">{jobDetails?.title}</h1>
               <p className="text-green-600 font-medium mt-1">
-                {jobDetails?.category || 'Category'} - {jobDetails?.expertise || 'Expertise Level'}
+                {jobDetails?.category} - {jobDetails?.subCategory}
               </p>
               <p className="text-gray-500 text-sm mt-1">Posted {jobDetails?.createdAt ? new Date(jobDetails.createdAt).toLocaleDateString() : 'recently'}</p>
             </div>
             <div className="text-right">
-              <p className="text-gray-700 font-medium">Budget: <span className="text-black">PKR {jobDetails?.budget || 'Not specified'}</span></p>
+              <p className="text-gray-700 font-medium">
+                Budget: <span className="text-black">
+                  {jobDetails?.jobType === 'hourly' && jobDetails?.budget
+                    ? `$${jobDetails.budget.min} - $${jobDetails.budget.max}/hr`
+                    : jobDetails?.budget
+                    ? `$${jobDetails.budget}`
+                    : 'Not specified'}
+                </span>
+              </p>
               <p className="text-gray-600 text-sm">{jobDetails?.jobType || 'Contract'}</p>
             </div>
           </div>
           
           <div className="border-t border-gray-200 mt-4 pt-4">
-            <p className="text-gray-700 whitespace-pre-line">{jobDetails?.jobDescription || 'No description provided'}</p>
+            <p className="text-gray-700 whitespace-pre-line">{jobDetails?.description || 'No description provided'}</p>
           </div>
           
           <div className="border-t border-gray-200 mt-4 pt-4">

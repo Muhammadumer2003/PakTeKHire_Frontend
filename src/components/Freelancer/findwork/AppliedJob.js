@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+
 const AppliedJobs = () => {
   const [proposals, setProposals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("all"); // Default to "all" to match your screenshot
+  const [activeTab, setActiveTab] = useState("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +25,7 @@ const AppliedJobs = () => {
 
         if (response.status === 200) {
           setProposals(response.data);
-          console.log("Fetched proposals:", response.data); // Debug the response
+          console.log("Fetched proposals:", response.data);
         }
       } catch (error) {
         console.error("Error fetching proposals:", error);
@@ -67,15 +68,13 @@ const AppliedJobs = () => {
     }
   };
 
-  // Filter proposals based on active tab
   const filteredProposals = proposals.filter((proposal) => {
     if (activeTab === "pending") return proposal.status === "Pending";
     if (activeTab === "accepted") return proposal.status === "Accepted";
     if (activeTab === "rejected") return proposal.status === "Rejected";
-    return true; // For 'all' tab
+    return true;
   });
 
-  // Status badge styling
   const getStatusBadgeClasses = (status) => {
     switch (status) {
       case "Pending":
@@ -89,9 +88,8 @@ const AppliedJobs = () => {
     }
   };
 
-  // Navigate to chat with client
   const messageClient = (clientId) => {
-    console.log("Client ID:", clientId); // Debug the client ID
+    console.log("Client ID:", clientId);
     if (clientId) {
       navigate(`/chat/${clientId}`);
     } else {
@@ -110,7 +108,6 @@ const AppliedJobs = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="bg-white border-b border-gray-200">
           <div className="px-4 py-6 sm:px-6 lg:px-8">
             <h1 className="text-2xl font-semibold text-gray-900">
@@ -122,7 +119,6 @@ const AppliedJobs = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="bg-white border-b border-gray-200">
           <div className="px-4 sm:px-6 lg:px-8">
             <nav className="flex -mb-px">
@@ -170,7 +166,6 @@ const AppliedJobs = () => {
           </div>
         </div>
 
-        {/* Content */}
         <div className="py-6 px-4 sm:px-6 lg:px-8">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
@@ -178,7 +173,6 @@ const AppliedJobs = () => {
             </div>
           )}
 
-          {/* Filter Bar */}
           <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-4 py-3 mb-6">
             <div>
               <span className="text-sm font-medium text-gray-700">
@@ -198,7 +192,6 @@ const AppliedJobs = () => {
             </div>
           </div>
 
-          {/* Proposal List */}
           {filteredProposals.length > 0 ? (
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
               {filteredProposals.map((proposal, index) => (
@@ -210,7 +203,7 @@ const AppliedJobs = () => {
                 >
                   <div
                     className="px-6 py-5 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/jobs/${proposal.jobId}`)}
+                    onClick={() => navigate(`/proposals/${proposal._id}`)} // Navigate to proposal details
                   >
                     <div className="flex justify-between">
                       <div className="w-3/4">
@@ -222,12 +215,13 @@ const AppliedJobs = () => {
                             {proposal.job?.category || "Uncategorized"}
                           </span>
                           <span className="mx-1">•</span>
-                          {proposal.job?.expertise && (
-                            <>
-                              <span>{proposal.job?.expertise}</span>
-                              <span className="mx-1">•</span>
-                            </>
-                          )}
+                          <span>{proposal.job?.subCategory}</span>
+                          <span className="mx-1">•</span>
+                          <span>
+                            {proposal.job?.experienceLevel?.charAt(0).toUpperCase() + 
+                             proposal.job?.experienceLevel?.slice(1)} Level
+                          </span>
+                          <span className="mx-1">•</span>
                           <span>
                             Posted{" "}
                             {proposal.job?.createdAt
@@ -237,15 +231,33 @@ const AppliedJobs = () => {
                         </div>
                         <div className="mt-3">
                           <p className="text-sm text-gray-500 line-clamp-2">
-                            {proposal.job?.description?.substring(0, 200) ||
-                              "No description provided"}
-                            {proposal.job?.description?.length > 200
-                              ? "..."
-                              : ""}
+                            {proposal.job?.description || "No description provided"}
                           </p>
                         </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                          <span className="flex items-center">
+                            <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Project Scope: {proposal.job?.projectScope?.replace(/_/g, ' ').charAt(0).toUpperCase() + 
+                                          proposal.job?.projectScope?.replace(/_/g, ' ').slice(1)}
+                          </span>
+                          <span className="flex items-center">
+                            <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Duration: {proposal.job?.duration?.replace(/_/g, ' ')}
+                          </span>
+                          <span className="flex items-center">
+                            <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {proposal.job?.location || "Worldwide"}
+                          </span>
+                        </div>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          {proposal.job?.skills?.slice(0, 5).map((skill, idx) => (
+                          {proposal.job?.skills?.map((skill, idx) => (
                             <span
                               key={idx}
                               className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
@@ -253,19 +265,18 @@ const AppliedJobs = () => {
                               {skill}
                             </span>
                           ))}
-                          {proposal.job?.skills?.length > 5 && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              +{proposal.job.skills.length - 5} more
-                            </span>
-                          )}
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-medium text-gray-900">
-                          PKR {proposal.bidAmount || "Not specified"}
+                          {proposal.job?.jobType === 'hourly' && proposal.job?.budget
+                            ? `PKR ${proposal.job.budget.min} - ${proposal.job.budget.max}/hr`
+                            : proposal.job?.budget
+                            ? `PKR ${proposal.job.budget}`
+                            : 'Budget not specified'}
                         </div>
                         <div className="mt-1 text-sm text-gray-500">
-                          {proposal.job?.jobType || "Fixed Price"}
+                          {proposal.job?.jobType === 'hourly' ? 'Hourly Rate' : 'Fixed Price'}
                         </div>
                         <div className="mt-4 text-sm">
                           <div
@@ -284,7 +295,6 @@ const AppliedJobs = () => {
                     </div>
                   </div>
 
-                  {/* Proposal Details */}
                   <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center text-sm">
@@ -325,7 +335,7 @@ const AppliedJobs = () => {
                           )}
                         <button
                           className="text-sm font-medium text-green-600 hover:text-green-700"
-                          onClick={() => navigate(`/jobs/${proposal.jobId}`)}
+                          onClick={() => navigate(`/proposals/${proposal._id}`)}
                         >
                           View Details
                         </button>

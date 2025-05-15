@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Zoom SDK</title>
+    <script src="https://source.zoom.us/3.8.0/lib/vendor/react.min.js" onload="console.log('react.min.js loaded')" onerror="console.error('Failed to load react.min.js')"></script>
+<script src="https://source.zoom.us/3.8.0/lib/vendor/react-dom.min.js" onload="console.log('react-dom.min.js loaded')" onerror="console.error('Failed to load react-dom.min.js')"></script>
+<script src="https://source.zoom.us/3.8.0/lib/vendor/redux.min.js" onload="console.log('redux.min.js loaded')" onerror="console.error('Failed to load redux.min.js')"></script>
+<script src="https://source.zoom.us/3.8.0/lib/vendor/react-redux.min.js" onload="console.log('react-redux.min.js loaded')" onerror="console.error('Failed to load react-redux.min.js')"></script>
+<script src="https://source.zoom.us/3.8.0/lib/index.js" onload="console.log('Zoom Web SDK index.js loaded')" onerror="console.error('Failed to load Zoom Web SDK index.js')"></script>
+<script src="https://source.zoom.us/3.8.0/lib/av/vconsole.min.js" onload="console.log('vconsole.min.js loaded')" onerror="console.error('Failed to load vconsole.min.js')"></script>
+<script src="https://source.zoom.us/3.8.0/lib/av/zego-express-web.min.js" onload="console.log('zego-express-web.min.js loaded')" onerror="console.error('Failed to load zego-express-web.min.js')"></script>
+<script>
+  window.onload = function () {
+    if (window.ZoomMtg) {
+      console.log('Zoom Web SDK fully loaded and ready');
+    } else {
+      console.error('Zoom Web SDK failed to load after all scripts');
+    }
+  };
+</script>
+  </head>
+  <body>
+    <h1>Test Zoom SDK Loading</h1>
+    <script>
+      setTimeout(() => {
+        if (window.ZoomMtg) {
+          console.log('ZoomMtg is available');
+        } else {
+          console.error('ZoomMtg is not available');
+        }
+      }, 2000);
+    </script>
+  </body>
+</html>

@@ -28,7 +28,7 @@ const ActionIcons = () => {
 
   const clientLinks = [
     { name: <FiUser className="text-white" size={20} />, route: "/client/dashboard" },
-    { name: <FiMail className="text-white" size={20} />, route: `/chat/${sel?._id}` },
+    { name: <FiMail className="text-white" size={20} />, route: `/client/chat/${sel?._id}` },
     { name: <FiBell className="text-white" size={20} />, route: "/client/notify" },
     { name: <FiMessageCircle size={24} />, route: "/client/chatbot" },
   ];

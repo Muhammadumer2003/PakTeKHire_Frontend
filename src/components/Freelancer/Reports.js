@@ -1,13 +1,139 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, LineChart, PieChart, TrendingUp } from 'lucide-react';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
 
- const Reports=()=> {
+const Reports = () => {
+  // Get user data from Redux store
+  const auth = useSelector(state => state.auth);
+  const { user } = auth || {};
+  const userId = user?._id;
+
+  // State for dynamic data
+  const [reportData, setReportData] = useState({
+    earnings: 0,
+    activeProjects: 0,
+    completionRate: 0,
+    hoursWorked: 0,
+    earningsTrend: '0%',
+    projectsTrend: '0',
+    completionTrend: '0%',
+    hoursTrend: '0h'
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [chartData, setChartData] = useState({
+    earnings: [],
+    projects: []
+  });
+
+  // Fetch reports data from backend
+  useEffect(() => {
+    const fetchReportData = async () => {
+      if (!userId) return;
+      
+      try {
+        setLoading(true);
+        const response = await axios.get(`http://localhost:8008/freelancer/reports/${userId}`, {
+          withCredentials: true
+        });
+        
+        const data = response.data;
+        
+        setReportData({
+          earnings: data.totalEarnings || 0,
+          activeProjects: data.activeProjects || 0,
+          completionRate: data.completionRate || 0,
+          hoursWorked: data.hoursWorked || 0,
+          earningsTrend: data.earningsTrend || '0%',
+          projectsTrend: data.projectsTrend || '0',
+          completionTrend: data.completionTrend || '0%',
+          hoursTrend: data.hoursTrend || '0h'
+        });
+        
+        // Set chart data if available
+        if (data.chartsData) {
+          setChartData({
+            earnings: data.chartsData.earnings || [],
+            projects: data.chartsData.projects || []
+          });
+        }
+        
+      } catch (err) {
+        console.error('Error fetching report data:', err);
+        setError('Failed to load report data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchReportData();
+  }, [userId]);
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return `RS ${amount.toLocaleString()}`;
+  };
+
+  // Create stats array from dynamic data
   const stats = [
-    { label: 'Total Earnings', value: 'RS 24,500', trend: '+12%', icon: TrendingUp, color: 'bg-green-100', textColor: 'text-green-500' },
-    { label: 'Active Projects', value: '8', trend: '+3', icon: BarChart, color: 'bg-blue-100', textColor: 'text-blue-500' },
-    { label: 'Completion Rate', value: '94%', trend: '+2%', icon: PieChart, color: 'bg-yellow-100', textColor: 'text-yellow-500' },
-    { label: 'Hours Worked', value: '164h', trend: '+8h', icon: LineChart, color: 'bg-purple-100', textColor: 'text-purple-500' },
+    { 
+      label: 'Total Earnings', 
+      value: formatCurrency(reportData.earnings), 
+      trend: reportData.earningsTrend, 
+      icon: TrendingUp, 
+      color: 'bg-green-100', 
+      textColor: 'text-green-500' 
+    },
+    { 
+      label: 'Active Projects', 
+      value: reportData.activeProjects.toString(), 
+      trend: `+${reportData.projectsTrend}`, 
+      icon: BarChart, 
+      color: 'bg-blue-100', 
+      textColor: 'text-blue-500' 
+    },
+    { 
+      label: 'Completion Rate', 
+      value: `${reportData.completionRate}%`, 
+      trend: reportData.completionTrend, 
+      icon: PieChart, 
+      color: 'bg-yellow-100', 
+      textColor: 'text-yellow-500' 
+    },
+    { 
+      label: 'Hours Worked', 
+      value: `${reportData.hoursWorked}h`, 
+      trend: reportData.hoursTrend, 
+      icon: LineChart, 
+      color: 'bg-purple-100', 
+      textColor: 'text-purple-500' 
+    },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-green-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500 font-medium text-center">
+          <p>{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 font-inter">
@@ -41,20 +167,41 @@ import { BarChart, LineChart, PieChart, TrendingUp } from 'lucide-react';
         {/* Earnings Overview */}
         <div className="rounded-xl shadow-lg p-8 bg-white">
           <h2 className="text-2xl font-semibold mb-6">Earnings Overview</h2>
-          <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-            <span className="text-gray-500">Earnings chart will be displayed here</span>
-          </div>
+          {chartData.earnings.length > 0 ? (
+            <div className="h-64">
+              {/* Here you would render a chart using a library like Chart.js or Recharts */}
+              {/* For example: <LineChart data={chartData.earnings} /> */}
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">Chart shows data for {chartData.earnings.length} months</p>
+              </div>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
+              <span className="text-gray-500">No earnings data available yet</span>
+            </div>
+          )}
         </div>
 
         {/* Project Status */}
         <div className="rounded-xl shadow-lg p-8 bg-white">
           <h2 className="text-2xl font-semibold mb-6">Project Status</h2>
-          <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-            <span className="text-gray-500">Project status chart will be displayed here</span>
-          </div>
+          {chartData.projects.length > 0 ? (
+            <div className="h-64">
+              {/* Here you would render a chart using a library like Chart.js or Recharts */}
+              {/* For example: <PieChart data={chartData.projects} /> */}
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">Chart shows status of {chartData.projects.length} projects</p>
+              </div>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
+              <span className="text-gray-500">No project data available yet</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
 export default Reports;

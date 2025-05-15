@@ -21,6 +21,7 @@ import PostJob from './components/ProjectOwner/PostJob.js';
 import Chatbot from './components/Freelancer/Chat/Chatbot.js';
 import WorkHistory from './components/Freelancer/Profile/WorkHistory.js';
 import Reviews from './components/Freelancer/Profile/Reviews.js';
+import ProposalDetails from './components/Freelancer/findwork/ProposalDetail.js';
 
 
 // function App() {
@@ -183,6 +184,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/reports" element={<Reports />} />
+
           <Route path="/setting" element={<Setting />} />
           <Route path="/client/setting" element={<Setting />} />
           <Route path="/work-history" element={<WorkHistory />} />
@@ -202,8 +204,10 @@ function App() {
           <Route path="/notify" element={<Notification />} />
           <Route path="/find-work" element={<FindWork />} />
           <Route path="/applied-jobs" element={<AppliedJobs/>} />
+          <Route path="/proposals/:proposalId" element={<ProposalDetails />} />
           <Route path="/proposal/:jobId" element={<ProposalPage/>} />
-          <Route path="/find-work/:id" element={<JobDetailPage />} />
+         
+          <Route path="/find-work/:jobId" element={<JobDetailPage />} />
           <Route path="*" element={<h1>Page Not Found</h1>} />
         </Routes>
         </div>

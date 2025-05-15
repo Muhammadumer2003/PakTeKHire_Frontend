@@ -5,33 +5,80 @@ import SearchBar from './findwork/SearchBar';
 import JobCard from './findwork/JobCard';
 import Tabs from './findwork/Tabs';
 import SearchComponent from './findwork/SearchBar';
+import { useSelector } from 'react-redux';
 
 const FindWork = () => {
   const [activeTab, setActiveTab] = useState('My Feed');
   const tabs = ['My Feed', 'Job Listing'];
+  const ssel = useSelector(store => store.auth);
+  const { user } = ssel;
+  const { category, fullname, profilePic, skills } = user || {};
 
-  // State to store all jobs fetched from the backend
   const [jobs, setJobs] = useState([]);
-
-  // State to store filtered jobs
   const [filteredJobs, setFilteredJobs] = useState([]);
-
-  // State to track loading and error states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 10;
 
-  // Fetch all jobs from the backend API
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  const indexOfLastJob = currentPage * jobsPerPage;
+  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
+
+  // Debug: Log the jobs data
+  useEffect(() => {
+    console.log('Jobs:', jobs);
+    console.log('Filtered Jobs:', filteredJobs);
+    console.log('Current Jobs:', currentJobs);
+  }, [jobs, filteredJobs, currentJobs]);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const renderPagination = () => (
+    <div className="flex justify-center mt-4">
+      <button
+        onClick={() => handlePageChange(currentPage - 1)}
+        className="px-3 py-1 mx-1 rounded bg-gray-300"
+        disabled={currentPage === 1}
+      >
+        Previous
+      </button>
+      {Array.from({ length: totalPages }, (_, index) => (
+        <button
+          key={index + 1}
+          onClick={() => handlePageChange(index + 1)}
+          className={`px-3 py-1 mx-1 rounded ${
+            currentPage === index + 1 ? 'bg-green-500 text-white' : 'bg-gray-300'
+          }`}
+        >
+          {index + 1}
+        </button>
+      ))}
+      <button
+        onClick={() => handlePageChange(currentPage + 1)}
+        className="px-3 py-1 mx-1 rounded bg-gray-300"
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </button>
+    </div>
+  );
+
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get('http://localhost:8008/client/getjobs', {
+        const response = await axios.get('http://51.21.200.232:8008/client/getjobs', {
           withCredentials: true,
         });
-        setJobs(response.data.jobs); // Set the fetched jobs
-        setFilteredJobs(response.data.jobs); // Initialize filtered jobs with all jobs
+        console.log('API Response:', response.data);
+        setJobs(response.data.jobs || []);
+        setFilteredJobs(response.data.jobs || []);
       } catch (error) {
         console.error('Error fetching jobs:', error);
-        setError('Failed to fetch jobs. Please try again.');
+        setError(error.response?.data?.message || 'Failed to fetch jobs. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -40,33 +87,51 @@ const FindWork = () => {
     fetchJobs();
   }, []);
 
-  // Handle search functionality
   const handleSearch = (query) => {
     if (!query) {
-      // If the search query is empty, show all jobs
       setFilteredJobs(jobs);
+      console.log('Search: Reset to all jobs');
       return;
     }
 
-    // Filter jobs based on title, location, or tags
     const filtered = jobs.filter(
       (job) =>
-        job.jobTitle.toLowerCase().includes(query.toLowerCase()) ||
-        job.location?.toLowerCase().includes(query.toLowerCase()) ||
-        job.tags?.some((tag) => tag.toLowerCase().includes(query.toLowerCase()))
+        job?.jobTitle?.toLowerCase().includes(query?.toLowerCase()) ||
+        job?.location?.toLowerCase().includes(query?.toLowerCase()) ||
+        job?.skills?.some((skill) => skill?.toLowerCase().includes(query?.toLowerCase()))
     );
     setFilteredJobs(filtered);
+    console.log('Search: Filtered jobs:', filtered);
   };
 
-  
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-green-500" />
-        </div>
-      );
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'Job Listing') {
+      const skillsArray = Array.isArray(skills) ? skills : (skills ? skills.split(',') : []);
+      console.log('User Skills:', skillsArray);
+      if (skillsArray.length === 0) {
+        setFilteredJobs(jobs);
+        console.log('Tab: Job Listing - No user skills, showing all jobs');
+      } else {
+        const filtered = jobs.filter((job) =>
+          job.skills?.length > 0 && job.skills.some((skill) => skillsArray.includes(skill))
+        );
+        setFilteredJobs(filtered);
+        console.log('Tab: Job Listing - Filtered jobs:', filtered);
+      }
+    } else {
+      setFilteredJobs(jobs);
+      console.log('Tab: My Feed - Reset to all jobs');
     }
-  
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-green-500" />
+      </div>
+    );
+  }
 
   if (error) {
     return <p className="text-red-500">{error}</p>;
@@ -77,15 +142,15 @@ const FindWork = () => {
       <Sidebar />
       <div className="flex-1 p-4">
         <SearchComponent onSearch={handleSearch} />
-        <Tabs tabs={tabs} activeTab={activeTab} onTabClick={setActiveTab} />
-        {/* Display filtered jobs */}
-        {filteredJobs.length === 0 ? (
+        <Tabs tabs={tabs} activeTab={activeTab} onTabClick={handleTabClick} />
+        {currentJobs.length === 0 ? (
           <p>No jobs found.</p>
         ) : (
-          filteredJobs.map((job) => (
+          currentJobs.map((job) => (
             <JobCard key={job._id} job={job} />
           ))
         )}
+        {renderPagination()}
       </div>
     </div>
   );
