@@ -70,7 +70,7 @@ const FindWork = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get('http://51.21.200.232:8008/client/getjobs', {
+        const response = await axios.get('http://localhost:8008/client/getjobs', {
           withCredentials: true,
         });
         console.log('API Response:', response.data);
