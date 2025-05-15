@@ -8,7 +8,7 @@ const ActiveProjects = () => {
   const [error, setError] = useState(null);
 
   // Base API URL (replace with your backend URL)
-  const API_URL = 'http://51.21.200.232:8008'; // Update with your actual backend URL
+  const API_URL = 'http://localhost:8008'; // Update with your actual backend URL
 
   // Fetch jobs on component mount
   useEffect(() => {

@@ -28,7 +28,7 @@ const ProposalPage = () => {
     const fetchJobDetails = async () => {
       try {
         const response = await axios.get(
-          `http://51.21.200.232:8008/jobs/${jobId}`,
+          `http://localhost:8008/jobs/${jobId}`,
           { withCredentials: true }
         );
         setJobDetails(response.data.job); // Adjust to match the response structure if needed
@@ -122,7 +122,7 @@ const ProposalPage = () => {
       }
 
       const response = await axios.post(
-        `http://51.21.200.232:8008/api/proposals/${jobId}`,
+        `http://localhost:8008/api/proposals/${jobId}`,
         formData,
         {
           headers: {

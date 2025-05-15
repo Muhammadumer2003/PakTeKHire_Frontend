@@ -18,7 +18,7 @@ const JobDetail = () => {
 
     const fetchJob = async () => {
       try {
-        const url = `http://51.21.200.232:8008/jobs/${jobId}`;
+        const url = `http://localhost:8008/jobs/${jobId}`;
         const response = await axios.get(url, {
           withCredentials: true,
         });

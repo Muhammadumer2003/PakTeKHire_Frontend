@@ -15,7 +15,7 @@ const Login = () => {
   const fetchData = async () => {
     try {
       const response = await axios.post(
-        'http://51.21.200.232:8008/user/login',
+        'http://localhost:8008/user/login',
         { email, password },
         { withCredentials: true }
       );
